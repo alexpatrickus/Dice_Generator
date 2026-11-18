@@ -1,12 +1,10 @@
 import { useState } from 'react'
 import { DiceTray } from './components/DiceTray.jsx'
-import { RollResults } from './components/RollResults.jsx'
 import { EMPTY_COUNTS, clampCount, rollSelection, singleTypeCounts } from './lib/dice.js'
 
 export default function App() {
   const [counts, setCounts] = useState(EMPTY_COUNTS)
   const [roll, setRoll] = useState(null)
-  const [showIndividual, setShowIndividual] = useState(true)
 
   function startRoll(nextCounts) {
     setRoll(rollSelection(nextCounts))
@@ -40,22 +38,12 @@ export default function App() {
       <main className="layout">
         <DiceTray
           counts={counts}
+          roll={roll}
           onCount={setCount}
           onRollOne={rollOne}
           onRoll={rollSelected}
           onReset={resetCounts}
         />
-        <div className="options">
-          <label className="toggle">
-            <input
-              type="checkbox"
-              checked={showIndividual}
-              onChange={(event) => setShowIndividual(event.target.checked)}
-            />
-            Show individual results
-          </label>
-        </div>
-        <RollResults roll={roll} showIndividual={showIndividual} />
       </main>
     </div>
   )
