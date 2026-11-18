@@ -1,19 +1,27 @@
 import { useState } from 'react'
 import { DiceTray } from './components/DiceTray.jsx'
-import { EMPTY_COUNTS, clampCount, rollSelection, singleTypeCounts } from './lib/dice.js'
+import {
+  EMPTY_COUNTS,
+  EMPTY_MODIFIERS,
+  clampCount,
+  clampModifier,
+  rollSelection,
+  singleTypeCounts,
+} from './lib/dice.js'
 
 export default function App() {
   const [counts, setCounts] = useState(EMPTY_COUNTS)
+  const [modifiers, setModifiers] = useState(EMPTY_MODIFIERS)
   const [roll, setRoll] = useState(null)
 
   function startRoll(nextCounts) {
-    setRoll(rollSelection(nextCounts))
+    setRoll(rollSelection(nextCounts, { modifiers }))
   }
 
   function rollOne(sides) {
     const nextCounts = singleTypeCounts(sides)
     setCounts(nextCounts)
-    startRoll(nextCounts)
+    setRoll(rollSelection(nextCounts, { modifiers }))
   }
 
   function rollSelected() {
@@ -26,6 +34,12 @@ export default function App() {
 
   function resetCounts() {
     setCounts(EMPTY_COUNTS)
+    setModifiers(EMPTY_MODIFIERS)
+    setRoll(null)
+  }
+
+  function setModifier(sides, modifier) {
+    setModifiers((current) => ({ ...current, [sides]: clampModifier(modifier) }))
   }
 
   return (
@@ -38,8 +52,10 @@ export default function App() {
       <main className="layout">
         <DiceTray
           counts={counts}
+          modifiers={modifiers}
           roll={roll}
           onCount={setCount}
+          onModifier={setModifier}
           onRollOne={rollOne}
           onRoll={rollSelected}
           onReset={resetCounts}

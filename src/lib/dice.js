@@ -1,7 +1,9 @@
 export const DIE_TYPES = [4, 6, 8, 10, 12, 20]
 export const MAX_DICE_PER_TYPE = 20
+export const MAX_MODIFIER = 20
 
 export const EMPTY_COUNTS = Object.fromEntries(DIE_TYPES.map((sides) => [sides, 0]))
+export const EMPTY_MODIFIERS = Object.fromEntries(DIE_TYPES.map((sides) => [sides, 0]))
 
 let sequence = 0
 
@@ -13,6 +15,25 @@ function nextId() {
 export function clampCount(count) {
   const value = Number.isFinite(count) ? Math.floor(count) : 0
   return Math.min(MAX_DICE_PER_TYPE, Math.max(0, value))
+}
+
+export function clampModifier(modifier) {
+  const value = Number.isFinite(modifier) ? Math.floor(modifier) : 0
+  return Math.min(MAX_MODIFIER, Math.max(-MAX_MODIFIER, value))
+}
+
+export function formatModifier(modifier) {
+  const value = clampModifier(modifier)
+  if (value > 0) return `+${value}`
+  return String(value)
+}
+
+export function formatDieBreakdown(die) {
+  const natural = die.natural ?? die.value
+  const modifier = die.modifier ?? 0
+  if (modifier === 0) return String(die.value)
+  if (modifier > 0) return `${natural} + ${modifier}`
+  return `${natural} − ${Math.abs(modifier)}`
 }
 
 export function rollDie(sides, random = Math.random) {
@@ -46,15 +67,18 @@ export function rollSelection(counts, options = {}) {
   const random = options.random ?? Math.random
   const now = options.now ?? Date.now
   const id = options.id ?? nextId
+  const modifiers = options.modifiers ?? EMPTY_MODIFIERS
 
   const dice = []
   const sums = Object.fromEntries(DIE_TYPES.map((sides) => [sides, 0]))
 
   for (const sides of DIE_TYPES) {
     const count = clampCount(counts?.[sides] ?? 0)
+    const modifier = clampModifier(modifiers?.[sides] ?? 0)
     for (let index = 0; index < count; index += 1) {
-      const value = rollDie(sides, random)
-      dice.push({ id: id(), sides, value })
+      const natural = rollDie(sides, random)
+      const value = natural + modifier
+      dice.push({ id: id(), sides, natural, modifier, value })
       sums[sides] += value
     }
   }

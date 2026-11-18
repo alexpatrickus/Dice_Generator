@@ -3,6 +3,8 @@ import {
   DIE_TYPES,
   MAX_DICE_PER_TYPE,
   clampCount,
+  clampModifier,
+  formatDieBreakdown,
   rollDie,
   rollSelection,
   rollValueTone,
@@ -34,6 +36,14 @@ describe('rollDie', () => {
 
   it('rejects an unsupported die', () => {
     expect(() => rollDie(7)).toThrow(/Unsupported die/)
+  })
+})
+
+describe('formatDieBreakdown', () => {
+  it('shows natural plus modifier when a modifier is set', () => {
+    expect(formatDieBreakdown({ value: 7, natural: 3, modifier: 4 })).toBe('3 + 4')
+    expect(formatDieBreakdown({ value: 2, natural: 5, modifier: -3 })).toBe('5 − 3')
+    expect(formatDieBreakdown({ value: 6, natural: 6, modifier: 0 })).toBe('6')
   })
 })
 
@@ -85,6 +95,21 @@ describe('rollSelection', () => {
     const roll = rollSelection({ 4: 0, 6: 0, 8: 0, 10: 0, 12: 0, 20: 0 }, { now: () => 0 })
     expect(roll.dice).toEqual([])
     expect(roll.total).toBe(0)
+  })
+
+  it('adds each row modifier to every die of that type', () => {
+    const roll = rollSelection(
+      { 6: 2, 20: 0, 4: 0, 8: 0, 10: 0, 12: 0 },
+      { modifiers: { 6: 3, 20: 0, 4: 0, 8: 0, 10: 0, 12: 0 }, random: () => 0 },
+    )
+    expect(roll.dice).toEqual([
+      expect.objectContaining({ sides: 6, natural: 1, modifier: 3, value: 4 }),
+      expect.objectContaining({ sides: 6, natural: 1, modifier: 3, value: 4 }),
+    ])
+    expect(roll.sums[6]).toBe(8)
+    expect(roll.total).toBe(8)
+    expect(clampModifier(25)).toBe(20)
+    expect(clampModifier(-21)).toBe(-20)
   })
 
   it('caps each type at 20 dice', () => {
